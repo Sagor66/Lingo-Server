@@ -29,6 +29,7 @@ async function run() {
 
     classesCollection = client.db("lingoDB").collection("classes")
     instructorsCollection = client.db("lingoDB").collection("instructors")
+    usersCollection = client.db("lingoDB").collection("users")
 
 
     // classes related apis
@@ -46,6 +47,25 @@ async function run() {
     // instructors related apis
     app.get('/instructors', async (req, res) => {
       const result = await instructorsCollection.find().toArray()
+      res.send(result)
+    })
+
+
+
+    // users related apis
+    app.get('/users', async (req, res) => {
+      const result = await usersCollection.find().toArray()
+      res.send(result)
+    })
+
+    app.post('/users', async (req, res) => {
+      const user = req.body
+      const query = { email: user.email }
+      const existingUser = await usersCollection.findOne(query)
+      if (existingUser) {
+        return res.send({ message: "User already exists" })
+      }
+      const result = await usersCollection.insertOne(user)
       res.send(result)
     })
 
