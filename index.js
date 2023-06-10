@@ -51,6 +51,7 @@ async function run() {
     instructorsCollection = client.db("lingoDB").collection("instructors");
     usersCollection = client.db("lingoDB").collection("users");
     cartCollection = client.db("lingoDB").collection("cart");
+    newClassesCollection = client.db("lingoDB").collection("newClasses");
 
     // jwt
     app.post("/jwt", (req, res) => {
@@ -78,25 +79,6 @@ async function run() {
       res.send(result);
     });
 
-    // app.get("/classes/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const query = { _id: new ObjectId(id) };
-
-    //   const options = {
-    //     projection: {
-    //       image: 1,
-    //       available_seats: 1,
-    //       class_name: 1,
-    //       instructor: 1,
-    //       price: 1,
-    //       total_students: 1,
-    //     },
-    //   };
-
-    //   const result = await classesCollection.findOne(query, options);
-    //   res.send(result);
-    // });
-
     app.get("/classes-sort", async (req, res) => {
       const result = await classesCollection
         .find()
@@ -106,11 +88,60 @@ async function run() {
       res.send(result);
     });
 
+    // new classes related apis
+    app.get("/new-classes", verifyJWT, async (req, res) => {
+      const email = req.query.email
+      if (!email) {
+        res.send([])
+      }
+      const decodedEmail = req.decoded.email
+
+      if (email !== decodedEmail) {
+        return res.status(401).send({ error: true, message: "forbidden access" })
+      }
+
+      const query = { email: email }
+      const result = await newClassesCollection.find(query).toArray()
+      res.send(result)
+    })
+
+
+    app.post('/new-classes', async (req, res) => {
+      const item = req.body
+      
+      const result = await newClassesCollection.insertOne(item)
+      console.log(result)
+      res.send(result)
+    })
+
 
     // cart related apis
+    app.get("/cart", verifyJWT, async (req, res) => {
+      const email = req.query.email
+      if (!email) {
+        res.send([])
+      }
+      const decodedEmail = req.decoded.email
+
+      if (email !== decodedEmail) {
+        return res.status(401).send({ error: true, message: "forbidden access" })
+      }
+
+      const query = { email: email }
+      const result = await cartCollection.find(query).toArray()
+      res.send(result)
+    })
+
     app.post("/cart", async (req, res) => {
       const item = req.body
       const result = await cartCollection.insertOne(item);
+      res.send(result);
+    });
+
+    app.delete("/cart/:id", async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const result = await cartCollection.deleteOne(query);
       res.send(result);
     });
 
