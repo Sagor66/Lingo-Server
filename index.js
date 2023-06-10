@@ -75,6 +75,8 @@ async function run() {
 
     // classes related apis
     app.get("/classes", async (req, res) => {
+      const email = req.query.email
+
       const result = await classesCollection.find().toArray();
       res.send(result);
     });
@@ -89,6 +91,22 @@ async function run() {
     });
 
     // new classes related apis
+    app.get("/new-classes/all", verifyJWT, async (req, res) => {
+      const email = req.query.email
+      // console.log(email)
+      if (!email) {
+        res.send([])
+      }
+      const decodedEmail = req.decoded.email
+
+      if (email !== decodedEmail) {
+        return res.status(401).send({ error: true, message: "forbidden access" })
+      }
+      
+      const result = await newClassesCollection.find().toArray()
+      res.send(result)
+    })
+
     app.get("/new-classes", verifyJWT, async (req, res) => {
       const email = req.query.email
       if (!email) {
@@ -110,7 +128,31 @@ async function run() {
       const item = req.body
       
       const result = await newClassesCollection.insertOne(item)
-      console.log(result)
+      // console.log(result)
+      res.send(result)
+    })
+
+    app.patch('/new-classes/approved/:id', async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          status: "approved"
+        }
+      }
+      const result = await newClassesCollection.updateOne(filter, updatedDoc)
+      res.send(result)
+    })
+
+    app.patch('/new-classes/deny/:id', async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          status: "denied"
+        }
+      }
+      const result = await newClassesCollection.updateOne(filter, updatedDoc)
       res.send(result)
     })
 
