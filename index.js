@@ -1,6 +1,7 @@
 const express = require('express')
 const app = express()
 const cors = require("cors")
+var jwt = require("jsonwebtoken");
 require("dotenv").config()
 
 const port = process.env.PORT || 5000
@@ -53,7 +54,7 @@ async function run() {
     // jwt
     app.post("/jwt", (req, res) => {
       const user = req.body
-      const token = jwt.sign(user, process,env.ACCESS_TOKEN_SECRET, {
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "8h",
       })
       res.send({ token })
@@ -105,6 +106,60 @@ async function run() {
         return res.send({ message: "User already exists" })
       }
       const result = await usersCollection.insertOne(user)
+      res.send(result)
+    })
+
+    // check admin role
+    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email
+
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
+      }
+
+      const query = { email: email }
+      const user = await usersCollection.findOne(query)
+      const result = { admin: user?.role === "admin" }
+      res.send(result)
+    })
+
+    // check instructor role
+    app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email
+
+      if (req.decoded.email !== email) {
+        res.send({ instructor: false })
+      }
+
+      const query = { email: email }
+      const user = await usersCollection.findOne(query)
+      const result = { instructor: user?.role === "instructor" }
+      res.send(result)
+    })
+
+    // check student role
+    app.get('/users/student/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email
+
+      if (req.decoded.email !== email) {
+        res.send({ student: false })
+      }
+
+      const query = { email: email }
+      const user = await usersCollection.findOne(query)
+      const result = { student: user?.role === "student" }
+      res.send(result)
+    })
+
+    app.patch("/user/admin/:id", async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          role: "admin"
+        },
+      }
+      const result = await usersCollection.updateOne(filter, updatedDoc)
       res.send(result)
     })
 
