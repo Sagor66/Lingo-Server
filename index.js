@@ -93,6 +93,12 @@ async function run() {
     });
 
     // new classes related apis
+    app.get("/new-classes/all-approved", async (req, res) => {
+      const query = {status: 'approved'}
+      const result = await newClassesCollection.find(query).toArray()
+      res.send(result)
+    })
+
     app.get("/new-classes/all", verifyJWT, async (req, res) => {
       const email = req.query.email
       // console.log(email)
