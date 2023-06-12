@@ -46,7 +46,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const classesCollection = client.db("lingoDB").collection("classes");
     const instructorsCollection = client.db("lingoDB").collection("instructors");
@@ -54,6 +54,7 @@ async function run() {
     const cartCollection = client.db("lingoDB").collection("cart");
     const newClassesCollection = client.db("lingoDB").collection("newClasses");
     const paymentCollection = client.db("lingoDB").collection("payments");
+    
 
     // jwt
     app.post("/jwt", (req, res) => {
@@ -321,6 +322,22 @@ async function run() {
 
 
     // payment related apis
+    app.get("/payments", async (req, res) => {
+      const email = req.query.email;
+      const query = {email: email}
+      const result = await paymentCollection.find(query).toArray()
+      res.send(result)
+    })
+
+    app.get("/payments", async (req, res) => {
+      const email = req.query.email;
+      const query = {email: email}
+      const result = await paymentCollection.find(query).toArray()
+      const filteredResult = result.filter((obj) => obj.item);
+      const itemArray = filteredResult.map(obj => obj.item)
+      res.send(itemArray)
+    })
+
     app.post("/payments", verifyJWT, async (req, res) => {
       const payment = req.body
       const insertResult = await paymentCollection.insertOne(payment)
@@ -334,10 +351,10 @@ async function run() {
     })
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
